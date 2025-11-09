@@ -2,11 +2,10 @@ name: Deploy AWS S3toS3 Lambda
 
 on:
   push:
-    branches:
-      - dev  
-        paths:
+    branches: 
+      - dev
     paths:
-      - 'lambda/**' 
+      - 'lambda/**'
 
 permissions:
   id-token: write
