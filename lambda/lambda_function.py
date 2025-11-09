@@ -2,6 +2,7 @@ import json
 import boto3
 import csv
 import io
+from dynmo import put_item
 
 s3_client = boto3.client('s3')
 
@@ -9,19 +10,21 @@ s3_client = boto3.client('s3')
 def lambda_handler(event, context):
     # TODO implement
     print("event=", event)
+    s3_bucket = ''
+    object_key = ''
     record = event.get('Records')
     print(record)
     for e in record:
         s3_event_type = e.get('eventName')
         print(s3_event_type)
         s3_bucket = e['s3']['bucket']['name']
-        key = e['s3']['object']['key']
-        print(f"{s3_event_type},{s3_bucket},{key}")
-        read_from_s3(s3_event_type, s3_bucket, key)
-        return {
-            'statusCode': 201,
-            'body': json.dumps('Hello from Lambda!')
-        }
+        object_key = e['s3']['object']['key']
+        print(f"{s3_event_type},{s3_bucket},{object_key}")
+        read_from_s3(s3_event_type, s3_bucket, object_key)
+    return {
+        'statusCode': 200,
+        'body': f'Successfully processed {object_key} from {s3_bucket}'
+    }
 
 
 def read_from_s3(s3_event_type, s3_bucket, object_key):
@@ -39,11 +42,15 @@ def read_from_s3(s3_event_type, s3_bucket, object_key):
         print(f"CSV Header: {header}")
 
     # Process each row
-    for row in reader:
-        print(f"Processing row: {row}")
-        # Add your data processing logic here
 
-    return {
-        'statusCode': 200,
-        'body': f'Successfully processed {object_key} from {s3_bucket}'
-    }
+    for row in reader:
+        print(f"Processing row: {row},row={row[0]}")
+        item_data = {
+            'id': row[0],  # Replace with your primary key and value
+            'emp_name': row[1],
+            'dept_id': row[2],
+            'salary': row[3],
+            'hire_date': row[4]
+        }
+        print(item_data)
+        put_item(item_data)
