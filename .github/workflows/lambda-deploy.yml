@@ -1,44 +1,44 @@
-name: Deploy S3ToS3 Lambda Function
+name: Deploy AWS Lambda
 
 on:
   push:
     branches:
-      - main 
-      - dev
-    paths:
-      - 'lambda/s3tos3/**' # Trigger only when changes occur in specific Lambda function folder
+      - dev  
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13' # Specify your Python version
+          python-version: '3.13'
 
       - name: Install dependencies
+        working-directory: lambda
         run: |
-          pip install -r lambda/requirements.txt -t src/s3tos3/package
+          pip install -r requirements.txt -t .
+          zip -r ../lambda.zip .
 
-      - name: Zip Lambda deployment package
-        run: |
-          cd src/s3tos3
-          zip -r ../../lambda_package.zip .
-
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 # Your AWS region
+          role-to-assume: arn:aws:iam::<YOUR_AWS_ACCOUNT_ID>:role/<YOUR_GITHUB_ACTION_ROLE>
+          aws-region: us-east-1
 
-      - name: Deploy Lambda function
+      - name: Deploy to AWS Lambda
         run: |
           aws lambda update-function-code \
-            --function-name s3tos3-lambda-function \
-            --zip-file fileb://lambda_package.zip
+            --function-name s3tos3-function \
+            --zip-file fileb://lambda.zip
 
+      - name: Cleanup
+        run: rm lambda.zip
