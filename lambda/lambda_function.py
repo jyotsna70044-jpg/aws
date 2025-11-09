@@ -1,24 +1,45 @@
 import json
+import boto3
 
 def lambda_handler(event, context):
-    """
-    This function demonstrates a simple "Hello World" AWS Lambda function.
-    It takes an event, and optionally a 'name' from the event,
-    and returns a greeting message.
-    """
-    
-    # Extracting information from the event
-    # For example, if the event is {"name": "World"}
-    name = event.get('name', 'World') 
-    
-    # Constructing the response
-    response_message = f"Hello, {name}!"
-    
-    # Logging to CloudWatch (optional but good practice)
-    print(f"Lambda invoked with name: {name}")
-    
-    # Returning a structured response, often in JSON format
+    # TODO implement
+    print("event=", event)
+    record = event.get('Records')
+    print(record)
+    for e in record:
+        s3_event_type = e.get('eventName')
+        print(s3_event_type)
+        s3_bucket = e['s3']['bucket']['name']
+        key = e['s3']['object']['key']
+        print(f"{s3_event_type},{s3_bucket},{key}")
+        read_from_s3(s3_event_type, s3_bucket, key)
     return {
-        'statusCode': 200,
-        'body': json.dumps(response_message)
+        'statusCode': 201,
+        'body': json.dumps('Hello from Lambda!')
     }
+
+
+def read_from_s3(s3_event_type, bucket_name, input_file_key):
+    try:
+        df = ''
+        s3_input_path = f"s3://{bucket_name}/{input_file_key}"
+        # Read based on file type
+        if input_file_key.endswith(".csv"):
+            df = wr.s3.read_csv(s3_input_path)
+        elif input_file_key.endswith(".json"):
+            df = wr.s3.read_json(s3_input_path)
+        elif input_file_key.endswith(".parquet"):
+            df = wr.s3.read_parquet(s3_input_path)
+        else:
+            print("Unsupported file format for reading.")
+            # Handle other formats or raise an error
+        print(df.head())
+        write_to_s3(df,bucket_name)
+
+
+    except Exception as e:
+        print(f"Error reading file from S3: {e}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f"Error reading file: {str(e)}")
+        }
