@@ -1,45 +1,56 @@
 import json
 import boto3
+import csv
+import io
+from dynmo import put_item
+
+s3_client = boto3.client('s3')
+
 
 def lambda_handler(event, context):
     # TODO implement
     print("event=", event)
+    s3_bucket = ''
+    object_key = ''
     record = event.get('Records')
     print(record)
     for e in record:
         s3_event_type = e.get('eventName')
         print(s3_event_type)
         s3_bucket = e['s3']['bucket']['name']
-        key = e['s3']['object']['key']
-        print(f"{s3_event_type},{s3_bucket},{key}")
-        read_from_s3(s3_event_type, s3_bucket, key)
+        object_key = e['s3']['object']['key']
+        print(f"{s3_event_type},{s3_bucket},{object_key}")
+        read_from_s3(s3_event_type, s3_bucket, object_key)
     return {
-        'statusCode': 201,
-        'body': json.dumps('Hello from Lambda!')
+        'statusCode': 200,
+        'body': f'Successfully processed {object_key} from {s3_bucket}'
     }
 
 
-def read_from_s3(s3_event_type, bucket_name, input_file_key):
-    try:
-        df = ''
-        s3_input_path = f"s3://{bucket_name}/{input_file_key}"
-        # Read based on file type
-        if input_file_key.endswith(".csv"):
-            df = wr.s3.read_csv(s3_input_path)
-        elif input_file_key.endswith(".json"):
-            df = wr.s3.read_json(s3_input_path)
-        elif input_file_key.endswith(".parquet"):
-            df = wr.s3.read_parquet(s3_input_path)
-        else:
-            print("Unsupported file format for reading.")
-            # Handle other formats or raise an error
-        print(df.head())
-        write_to_s3(df,bucket_name)
+def read_from_s3(s3_event_type, s3_bucket, object_key):
+    # Get the object from S3
+    response = s3_client.get_object(Bucket=s3_bucket, Key=object_key)
+    csv_content = response['Body'].read().decode('utf-8')
 
+    # Read the CSV data
+    csv_file = io.StringIO(csv_content)
+    reader = csv.reader(csv_file)
 
-    except Exception as e:
-        print(f"Error reading file from S3: {e}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps(f"Error reading file: {str(e)}")
+    # Skip header if present
+    header = next(reader, None)
+    if header:
+        print(f"CSV Header: {header}")
+
+    # Process each row
+
+    for row in reader:
+        print(f"Processing row: {row},row={row[0]}")
+        item_data = {
+            'id': row[0],  # Replace with your primary key and value
+            'emp_name': row[1],
+            'dept_id': row[2],
+            'salary': row[3],
+            'hire_date': row[4]
         }
+        print(item_data)
+        put_item(item_data)

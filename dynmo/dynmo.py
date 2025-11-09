@@ -6,14 +6,12 @@ table_name = 'emp' # Replace with your actual table name
 
 def put_item(emp):
     table = dynamodb.Table(table_name)
-    # Define the item to be added as a dictionary
-    # Ensure your primary key attributes are included
     item_data = {
-        'id': emp['EmployeeID'],  # Replace with your primary key and value
-        'emp_name': emp['Name'],
-        'dept_id': emp['DepartmentID'],
-        'hire_date': emp['HireDate'],
-        'salary': emp['Salary'],
+        'id': row[0],  # Replace with your primary key and value
+        'emp_name': row[1],
+        'dept_id': row[2],
+        'salary': row[3],
+        'hire_date': row[4]
     }
 
     try:
