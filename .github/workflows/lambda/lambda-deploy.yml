@@ -41,3 +41,4 @@ jobs:
           aws lambda update-function-code \
             --function-name s3tos3-lambda-function \
             --zip-file fileb://lambda_package.zip
+
