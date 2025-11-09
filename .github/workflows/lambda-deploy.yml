@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - dev  
+        paths:
+    paths:
+      - 'lambda/**' 
 
 permissions:
   id-token: write
@@ -27,12 +30,6 @@ jobs:
         run: |
           pip install -r requirements.txt -t .
           zip -r ../lambda.zip .
-
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: arn:aws:iam::<YOUR_AWS_ACCOUNT_ID>:role/<YOUR_GITHUB_ACTION_ROLE>
-      #     aws-region: us-east-1
 
       - name: Configure AWS credentials using OIDC
         uses: aws-actions/configure-aws-credentials@v4
